@@ -46,17 +46,24 @@ func Run() {
 		panic(err)
 	}
 
-	print("good set")
+	fmt.Println("good set in postgres")
 
 	orders, err := storage.Postgres.GetOrders(ctx)
 	if err != nil {
 		panic(err)
 	}
 
-	for _, order := range *orders {
-		fmt.Println(order)
+	fmt.Println("good get from postgres")
+
+	storage.InMemory.SetOrder(orders)
+	fmt.Println("good set into in-memory")
+
+	orderInto, err := storage.InMemory.GetOrder("b563feb7b2b84b6test")
+	if err != nil {
+		fmt.Println(err.Error())
 	}
-	print("good get")
+	fmt.Println("good get from in-memory")
+	fmt.Println(orderInto)
 
 }
 

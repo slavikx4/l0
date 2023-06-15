@@ -79,10 +79,10 @@ func (p *Postgres) SetOrder(ctx context.Context, order *models.Order) error {
 	return nil
 }
 
-func (p *Postgres) GetOrders(ctx context.Context) (*[]models.Order, error) {
+func (p *Postgres) GetOrders(ctx context.Context) (*[]*models.Order, error) {
 	const op = "Postgres.GetOrders -> "
 
-	orders := make([]models.Order, 0)
+	orders := make([]*models.Order, 0)
 
 	query := `SELECT 
     				"order_uid",
@@ -142,7 +142,7 @@ func (p *Postgres) GetOrders(ctx context.Context) (*[]models.Order, error) {
 		if err := p.getItems(ctx, &order.Items, order.OrderUID); err != nil {
 			return nil, er.AddOp(err, op)
 		}
-		orders = append(orders, order)
+		orders = append(orders, &order)
 	}
 
 	return &orders, nil
