@@ -2,9 +2,10 @@ package postgres
 
 import (
 	"context"
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/slavikx4/l0/internal/models"
-	//"github.com/slavikx4/l0/pkg/error"
+	er "github.com/slavikx4/l0/pkg/error"
 	"github.com/slavikx4/l0/pkg/logger"
 )
 
@@ -12,35 +13,35 @@ type Postgres struct {
 	*pgxpool.Pool
 }
 
-func NewPostgres(url string) (*Postgres, error) {
-	DB, err := pgxpool.New(context.Background(), url)
+func NewPostgres(ctx context.Context, url string) (*Postgres, error) {
+	const op = "NewPostgres -> "
+
+	DB, err := pgxpool.New(ctx, url)
 	if err != nil {
-		logger.Logger.Error.Println("не удалось подключиться к DataBase L0: ", err)
-		return nil, err
+		return nil, &er.Error{Err: err, Code: er.ErrorNoConnect, Message: "не удалось подключиться к DataBase L0", Op: op}
 	}
 	if err := DB.Ping(context.Background()); err != nil {
-		logger.Logger.Error.Println("не удалось пингануть к DataBase L0: ", err)
-		return nil, err
+		return nil, &er.Error{Err: err, Code: er.ErrorNoPing, Message: "не удалось пингануть к DataBase L0", Op: op}
 	}
 	logger.Logger.Process.Println("подключён успешно postgres")
 
-	postgres := Postgres{DB}
+	postgres := Postgres{Pool: DB}
 	return &postgres, nil
 }
 
-func (p *Postgres) SetOrder(order *models.Order) error {
-	const op = "Postgres.SetOrder"
+func (p *Postgres) SetOrder(ctx context.Context, order *models.Order) error {
+	const op = "Postgres.SetOrder -> "
 
-	if err := p.setDelivery(&order.Delivery); err != nil {
-		return err
+	if err := p.setDelivery(ctx, &order.Delivery); err != nil {
+		return er.AddOp(err, op)
 	}
 
-	if err := p.setPayment(&order.Payment); err != nil {
-		return err
+	if err := p.setPayment(ctx, &order.Payment); err != nil {
+		return er.AddOp(err, op)
 	}
 
-	if err := p.setItems(&order.Items, order.OrderUID); err != nil {
-		return err
+	if err := p.setItems(ctx, &order.Items, order.OrderUID); err != nil {
+		return er.AddOp(err, op)
 	}
 
 	query := `INSERT INTO "order" (
@@ -58,7 +59,7 @@ func (p *Postgres) SetOrder(order *models.Order) error {
                      "date_created",
                      "oof_shard") VALUES ($1, $2, $3, $4,$5,$6,$7,$8,$9,$10,$11,$12,$13)`
 
-	if _, err := p.Pool.Exec(context.TODO(), query,
+	if _, err := p.Pool.Exec(ctx, query,
 		order.OrderUID,
 		order.TrackNumber,
 		order.Entry,
@@ -72,13 +73,15 @@ func (p *Postgres) SetOrder(order *models.Order) error {
 		order.SmID,
 		order.DateCreated,
 		order.OofShard); err != nil {
-		return err
+		return &er.Error{Err: err, Code: er.ErrorDataBaseLimitation, Message: "не удалось установить значение", Op: op}
 	}
 
 	return nil
 }
 
-func (p *Postgres) GetOrders() (*[]models.Order, error) {
+func (p *Postgres) GetOrders(ctx context.Context) (*[]models.Order, error) {
+	const op = "Postgres.GetOrders -> "
+
 	orders := make([]models.Order, 0)
 
 	query := `SELECT 
@@ -97,9 +100,14 @@ func (p *Postgres) GetOrders() (*[]models.Order, error) {
     				"oof_shard"
     		  FROM "order"`
 
-	rows, err := p.Pool.Query(context.TODO(), query)
+	rows, err := p.Pool.Query(ctx, query)
 	if err != nil {
-		return nil, err
+		if err == pgx.ErrNoRows {
+			return nil, &er.Error{Err: err, Code: er.ErrorNotFound, Message: "не удалось найти строку", Op: op}
+
+		} else {
+			return nil, &er.Error{Err: err, Code: er.ErrorDataBaseIndefinite, Message: "не удалось выполнить запрос", Op: op}
+		}
 	}
 
 	for rows.Next() {
@@ -122,17 +130,17 @@ func (p *Postgres) GetOrders() (*[]models.Order, error) {
 			&order.SmID,
 			&order.DateCreated,
 			&order.OofShard); err != nil {
-			return nil, err
+			return nil, &er.Error{Err: err, Code: er.ErrorDataBaseIndefinite, Message: "не удалось выполнить запрос", Op: op}
 		}
-		if err := p.getDelivery(&order.Delivery); err != nil {
-			return nil, err
+		if err := p.getDelivery(ctx, &order.Delivery); err != nil {
+			return nil, er.AddOp(err, op)
 		}
 
-		if err := p.getPayment(&order.Payment); err != nil {
-			return nil, err
+		if err := p.getPayment(ctx, &order.Payment); err != nil {
+			return nil, er.AddOp(err, op)
 		}
-		if err := p.getItems(&order.Items, order.OrderUID); err != nil {
-			return nil, err
+		if err := p.getItems(ctx, &order.Items, order.OrderUID); err != nil {
+			return nil, er.AddOp(err, op)
 		}
 		orders = append(orders, order)
 	}
@@ -140,7 +148,9 @@ func (p *Postgres) GetOrders() (*[]models.Order, error) {
 	return &orders, nil
 }
 
-func (p *Postgres) setDelivery(delivery *models.Delivery) error {
+func (p *Postgres) setDelivery(ctx context.Context, delivery *models.Delivery) error {
+	const op = "Postgres.setDelivery -> "
+
 	query := `INSERT INTO "delivery"(
                        "phone",
                        "name",
@@ -150,7 +160,7 @@ func (p *Postgres) setDelivery(delivery *models.Delivery) error {
                        "region",
                        "email") VALUES ($1,$2,$3,$4,$5,$6,$7)`
 
-	if _, err := p.Pool.Exec(context.TODO(), query,
+	if _, err := p.Pool.Exec(ctx, query,
 		delivery.Phone,
 		delivery.Name,
 		delivery.Zip,
@@ -158,12 +168,14 @@ func (p *Postgres) setDelivery(delivery *models.Delivery) error {
 		delivery.Address,
 		delivery.Region,
 		delivery.Email); err != nil {
-		return err
+		return &er.Error{Err: err, Code: er.ErrorDataBaseLimitation, Message: "не удалось установить значение", Op: op}
 	}
 	return nil
 }
 
-func (p *Postgres) setPayment(payment *models.Payment) error {
+func (p *Postgres) setPayment(ctx context.Context, payment *models.Payment) error {
+	const op = "Postgres.setPayment -> "
+
 	query := `INSERT INTO "payment"(
                       "transaction",
                       "request_id",
@@ -176,7 +188,7 @@ func (p *Postgres) setPayment(payment *models.Payment) error {
                       "goods_total",
                       "custom_fee") VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)`
 
-	if _, err := p.Pool.Exec(context.TODO(), query,
+	if _, err := p.Pool.Exec(ctx, query,
 		payment.Transaction,
 		payment.RequestID,
 		payment.Currency,
@@ -187,24 +199,28 @@ func (p *Postgres) setPayment(payment *models.Payment) error {
 		payment.DeliveryCost,
 		payment.GoodsTotal,
 		payment.CustomFee); err != nil {
-		return err
+		return &er.Error{Err: err, Code: er.ErrorDataBaseLimitation, Message: "не удалось установить значение", Op: op}
 	}
 	return nil
 }
 
-func (p *Postgres) setItems(items *models.Items, orderUID string) error {
+func (p *Postgres) setItems(ctx context.Context, items *models.Items, orderUID string) error {
+	const op = "Postgres.setItems -> "
+
 	for _, item := range *items {
-		if err := p.setItem(&item); err != nil {
-			return err
+		if err := p.setItem(ctx, &item); err != nil {
+			return er.AddOp(err, op)
 		}
-		if err := p.setOrderOfItem(orderUID, item.ChrtID); err != nil {
-			return err
+		if err := p.setOrderOfItem(ctx, orderUID, item.ChrtID); err != nil {
+			return er.AddOp(err, op)
 		}
 	}
 	return nil
 }
 
-func (p *Postgres) setItem(item *models.Item) error {
+func (p *Postgres) setItem(ctx context.Context, item *models.Item) error {
+	const op = "Postgres.setItem -> "
+
 	query := `INSERT INTO "items"(
                     "chrt_id",
                     "track_number",
@@ -218,7 +234,7 @@ func (p *Postgres) setItem(item *models.Item) error {
                     "brand",
                     "status") VALUES ($1, $2, $3, $4,$5,$6,$7,$8,$9,$10,$11)`
 
-	if _, err := p.Pool.Exec(context.TODO(), query,
+	if _, err := p.Pool.Exec(ctx, query,
 		item.ChrtID,
 		item.TrackNumber,
 		item.Price,
@@ -230,23 +246,27 @@ func (p *Postgres) setItem(item *models.Item) error {
 		item.NmID,
 		item.Brand,
 		item.Status); err != nil {
-		return err
+		return &er.Error{Err: err, Code: er.ErrorDataBaseLimitation, Message: "не удалось установить значение", Op: op}
 	}
 
 	return nil
 }
 
-func (p *Postgres) setOrderOfItem(orderUID string, chrtID int) error {
+func (p *Postgres) setOrderOfItem(ctx context.Context, orderUID string, chrtID int) error {
+	const op = "Postgres.setOrderOfItem -> "
+
 	query := `INSERT INTO "order_item"(
                          "order_uid",
                          "chrt_id") VALUES ($1, $2)`
-	if _, err := p.Pool.Exec(context.TODO(), query, orderUID, chrtID); err != nil {
-		return err
+	if _, err := p.Pool.Exec(ctx, query, orderUID, chrtID); err != nil {
+		return &er.Error{Err: err, Code: er.ErrorDataBaseLimitation, Message: "не удалось установить значение", Op: op}
 	}
 	return nil
 }
 
-func (p *Postgres) getDelivery(delivery *models.Delivery) error {
+func (p *Postgres) getDelivery(ctx context.Context, delivery *models.Delivery) error {
+	const op = "Postgres.getDelivery -> "
+
 	query := `SELECT 
 				"phone",
 				"name",
@@ -257,7 +277,7 @@ func (p *Postgres) getDelivery(delivery *models.Delivery) error {
 				"email"
 			FROM "delivery"`
 
-	if err := p.Pool.QueryRow(context.TODO(), query).Scan(
+	if err := p.Pool.QueryRow(ctx, query).Scan(
 		&delivery.Phone,
 		&delivery.Name,
 		&delivery.Zip,
@@ -265,13 +285,20 @@ func (p *Postgres) getDelivery(delivery *models.Delivery) error {
 		&delivery.Address,
 		&delivery.Region,
 		&delivery.Email); err != nil {
-		return err
+		if err == pgx.ErrNoRows {
+			return &er.Error{Err: err, Code: er.ErrorNotFound, Message: "не удалось найти строку", Op: op}
+
+		} else {
+			return &er.Error{Err: err, Code: er.ErrorDataBaseIndefinite, Message: "не удалось выполнить запрос ", Op: op}
+		}
 	}
 
 	return nil
 }
 
-func (p *Postgres) getPayment(payment *models.Payment) error {
+func (p *Postgres) getPayment(ctx context.Context, payment *models.Payment) error {
+	const op = "Postgres.getPayment -> "
+
 	query := `SELECT 
 					"transaction",
 					"request_id",
@@ -285,7 +312,7 @@ func (p *Postgres) getPayment(payment *models.Payment) error {
 					"custom_fee"
 				FROM "payment"`
 
-	if err := p.Pool.QueryRow(context.TODO(), query).Scan(
+	if err := p.Pool.QueryRow(ctx, query).Scan(
 		&payment.Transaction,
 		&payment.RequestID,
 		&payment.Currency,
@@ -296,13 +323,20 @@ func (p *Postgres) getPayment(payment *models.Payment) error {
 		&payment.DeliveryCost,
 		&payment.GoodsTotal,
 		&payment.CustomFee); err != nil {
-		return err
+		if err == pgx.ErrNoRows {
+			return &er.Error{Err: err, Code: er.ErrorNotFound, Message: "не удалось найти строку", Op: op}
+
+		} else {
+			return &er.Error{Err: err, Code: er.ErrorDataBaseIndefinite, Message: "не удалось выполнить запрос ", Op: op}
+		}
 	}
 
 	return nil
 }
 
-func (p *Postgres) getItems(items *models.Items, orderUID string) error {
+func (p *Postgres) getItems(ctx context.Context, items *models.Items, orderUID string) error {
+	const op = "Postgres.getItems -> "
+
 	query := `SELECT
 					"track_number",
 					"price",
@@ -316,15 +350,15 @@ func (p *Postgres) getItems(items *models.Items, orderUID string) error {
 					"status"
 			FROM "items" WHERE ("chrt_id"=$1)`
 
-	chrtIDs, err := p.getItemChrtIDsWithOrderUID(orderUID)
+	chrtIDs, err := p.getItemChrtIDsWithOrderUID(ctx, orderUID)
 	if err != nil {
-		return err
+		return er.AddOp(err, op)
 	}
 
 	for _, chrtID := range chrtIDs {
 		item := models.Item{}
 
-		if err := p.Pool.QueryRow(context.TODO(), query, chrtID).Scan(
+		if err := p.Pool.QueryRow(ctx, query, chrtID).Scan(
 			&item.TrackNumber,
 			&item.Price,
 			&item.Rid,
@@ -335,7 +369,12 @@ func (p *Postgres) getItems(items *models.Items, orderUID string) error {
 			&item.NmID,
 			&item.Brand,
 			&item.Status); err != nil {
-			return err
+			if err == pgx.ErrNoRows {
+				return &er.Error{Err: err, Code: er.ErrorNotFound, Message: "не удалось найти строку", Op: op}
+
+			} else {
+				return &er.Error{Err: err, Code: er.ErrorDataBaseIndefinite, Message: "не удалось выполнить запрос", Op: op}
+			}
 		}
 
 		*items = append(*items, item)
@@ -344,22 +383,29 @@ func (p *Postgres) getItems(items *models.Items, orderUID string) error {
 	return nil
 }
 
-func (p *Postgres) getItemChrtIDsWithOrderUID(orderUID string) ([]string, error) {
+func (p *Postgres) getItemChrtIDsWithOrderUID(ctx context.Context, orderUID string) ([]string, error) {
+	const op = "Postgres.getItemChrtIDsWitchOrderUID -> "
+
 	query := `SELECT
 					"chrt_id"
 				FROM "order_item" WHERE ("order_uid"=$1)`
 
 	chrtIDs := make([]string, 0, 1)
 
-	rows, err := p.Pool.Query(context.TODO(), query, orderUID)
+	rows, err := p.Pool.Query(ctx, query, orderUID)
 	if err != nil {
-		return nil, err
+		if err == pgx.ErrNoRows {
+			return nil, &er.Error{Err: err, Code: er.ErrorNotFound, Message: "не удалось найти строку", Op: op}
+
+		} else {
+			return nil, &er.Error{Err: err, Code: er.ErrorDataBaseIndefinite, Message: "не удалось получить список chrtID", Op: op}
+		}
 	}
 
 	var chrtID string
 	for rows.Next() {
 		if err := rows.Scan(&chrtID); err != nil {
-			return nil, err
+			return nil, &er.Error{Err: err, Code: er.ErrorDataBaseIndefinite, Message: "ошибка при сканировании", Op: op}
 		}
 		chrtIDs = append(chrtIDs, chrtID)
 	}

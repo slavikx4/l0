@@ -1,6 +1,7 @@
 package app
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"github.com/slavikx4/l0/internal/database"
@@ -21,7 +22,10 @@ func Run() {
 	//if err := initConfig(); err != nil {
 	//	logger.Logger.Error.Fatalln("ошибка инициализации конфига: ", err)
 	//}
-	postgres, err := postgres.NewPostgres("postgres://postgres:postgres@localhost:5432/L0")
+
+	ctx := context.Background()
+
+	postgres, err := postgres.NewPostgres(ctx, "postgres://postgres:postgres@localhost:5432/L0")
 	if err != nil {
 		panic(err)
 	}
@@ -38,13 +42,13 @@ func Run() {
 		panic(err)
 	}
 
-	if err := storage.Postgres.SetOrder(&order); err != nil {
+	if err := storage.Postgres.SetOrder(ctx, &order); err != nil {
 		panic(err)
 	}
 
 	print("good set")
 
-	orders, err := storage.Postgres.GetOrders()
+	orders, err := storage.Postgres.GetOrders(ctx)
 	if err != nil {
 		panic(err)
 	}
