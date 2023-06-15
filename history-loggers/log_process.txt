@@ -1,0 +1,13 @@
+PROCESS:	2023/06/15 03:44:53 app.go:17: запуск сервера
+PROCESS:	2023/06/15 03:47:59 app.go:17: запуск сервера
+PROCESS:	2023/06/15 05:24:32 postgres.go:24: подключён успешно postgres
+PROCESS:	2023/06/15 12:45:37 postgres.go:24: подключён успешно postgres
+PROCESS:	2023/06/15 12:55:21 postgres.go:24: подключён успешно postgres
+PROCESS:	2023/06/15 17:28:30 postgres.go:24: подключён успешно postgres
+PROCESS:	2023/06/15 17:53:49 postgres.go:25: подключён успешно postgres
+PROCESS:	2023/06/15 17:54:26 postgres.go:25: подключён успешно postgres
+PROCESS:	2023/06/15 17:54:52 postgres.go:25: подключён успешно postgres
+PROCESS:	2023/06/15 17:56:22 postgres.go:25: подключён успешно postgres
+PROCESS:	2023/06/15 17:58:03 postgres.go:25: подключён успешно postgres
+PROCESS:	2023/06/15 18:06:32 postgres.go:25: подключён успешно postgres
+PROCESS:	2023/06/15 18:43:41 postgres.go:24: подключён успешно postgres
