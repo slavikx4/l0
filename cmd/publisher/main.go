@@ -18,19 +18,19 @@ const (
 func main() {
 	const op = "cmd/publisher/main -> "
 
-	stanConnection, err := stan.Connect(stanClusterID, stanClientID)
+	stanConnect, err := stan.Connect(stanClusterID, stanClientID)
 	if err != nil {
 		err = &er.Error{Err: err, Code: er.ErrorNoConnect, Message: "не удалось установить соединение с nats-streaming-server", Op: op}
 		logger.Logger.Error.Fatalln(err.Error())
 	}
 	defer func() {
-		if err := stanConnection.Close(); err != nil {
+		if err := stanConnect.Close(); err != nil {
 			err = &er.Error{Err: err, Code: er.ErrorClose, Message: "не удалось закрыть соединение с nats-streaming-server", Op: op}
 			logger.Logger.Error.Println(err.Error())
 		}
 	}()
 
-	stanPublisher := publisher.NewPublisher(&stanConnection, channelName)
+	stanPublisher := publisher.NewPublisher(&stanConnect, channelName)
 
 	file, err := os.Open("model.json")
 	if err != nil {

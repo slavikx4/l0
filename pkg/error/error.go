@@ -31,6 +31,7 @@ func (e Error) Error() string {
 	return fmt.Sprintf("Code: %v; Message: %v; Err: %v; Path: %v", e.Code, e.Message, e.Err, e.Op)
 }
 
+// TODO переписать, чтобы был методом
 func AddOp(v error, op string) *Error {
 	e := v.(Error)
 	return &Error{

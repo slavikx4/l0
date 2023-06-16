@@ -18,9 +18,14 @@ func NewWBService(storage *database.Storage) *WBService {
 	return &WBService{Storage: storage}
 }
 
-//func (s *WBService) AddOrder(order *models.Order) error {
-//
-//	if err := s.Storage.Postgres.SetOrder(,order); err != nil{
-//		return err
-//	}
-//}
+func (s *WBService) AddOrder(order *models.Order) error {
+
+	//if err := s.Storage.Postgres.SetOrder(,order); err != nil{
+	//	return err
+	//}
+	return nil
+}
+
+func (s *WBService) GetOrder(orderUID string) (*models.Order, error) {
+	return nil, nil
+}
