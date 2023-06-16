@@ -1,0 +1,6 @@
+ERROR:	2023/06/16 22:45:35 main.go:24: Code: no connection; Message: не получилось подключиться к NATS; Err: dial tcp 127.0.0.1:4222: i/o timeout; Path: publisher/main -> 
+ERROR:	2023/06/16 22:47:09 main.go:24: Code: no connection; Message: не получилось подключиться к NATS; Err: stan: connect request timeout (possibly wrong cluster ID?); Path: publisher/main -> 
+ERROR:	2023/06/16 22:57:22 main.go:24: Code: no connection; Message: не получилось подключиться к NATS; Err: stan: connect request timeout (possibly wrong cluster ID?); Path: cmd/publisher/main -> 
+ERROR:	2023/06/16 23:01:45 main.go:24: Code: no connection; Message: не получилось подключиться к NATS; Err: stan: connect request timeout (possibly wrong cluster ID?); Path: cmd/publisher/main -> 
+ERROR:	2023/06/16 23:06:51 main.go:24: Code: no connection; Message: не получилось подключиться к NATS; Err: stan: connect request timeout (possibly wrong cluster ID?); Path: cmd/publisher/main -> 
+ERROR:	2023/06/16 23:11:06 main.go:24: Code: no connection; Message: не получилось подключиться к NATS; Err: stan: connect request timeout (possibly wrong cluster ID?); Path: cmd/publisher/main -> 

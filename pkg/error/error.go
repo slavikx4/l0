@@ -11,6 +11,9 @@ const (
 	ErrorService            errorCode = "error into service"
 	ErrorDataBaseLimitation errorCode = "error into data base limitation"
 	ErrorDataBaseIndefinite errorCode = "error into data base indefinite"
+	ErrorPublish            errorCode = "error publication"
+	ErrorClose              errorCode = "error close"
+	ErrorRead               errorCode = "error read"
 )
 
 type Error struct {

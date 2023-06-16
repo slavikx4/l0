@@ -9,3 +9,10 @@ type Storage struct {
 	Postgres *postgres.Postgres
 	InMemory *in_memory.InMemory
 }
+
+func NewStorage(postgresDB *postgres.Postgres, inMemory *in_memory.InMemory) *Storage {
+	return &Storage{
+		Postgres: postgresDB,
+		InMemory: inMemory,
+	}
+}
