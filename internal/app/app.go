@@ -11,6 +11,7 @@ import (
 	er "github.com/slavikx4/l0/pkg/error"
 	"github.com/slavikx4/l0/pkg/logger"
 	"github.com/spf13/viper"
+	"time"
 )
 
 // TODO убрать константы в конфиг
@@ -104,8 +105,14 @@ func Run() {
 
 	wbService := service.NewWBService(storage)
 
+	logger.Logger.Process.Println("всё запущенно, старт подписчика")
 	stanSubscriber := subscriber.NewSubscriber(&stanConnect, wbService, SubscriberDurableName)
-	stanSubscriber.Subscribe(channelName)
+	err = stanSubscriber.Subscribe(channelName)
+	if err != nil {
+		err = er.AddOp(err, op)
+		logger.Logger.Error.Fatalln(err.Error())
+	}
+	time.Sleep(time.Minute * 5)
 }
 
 func initConfig() error {
