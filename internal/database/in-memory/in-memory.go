@@ -9,7 +9,7 @@ import (
 )
 
 type InMemory struct {
-	OrderUIDToOrder map[string]*models.Order
+	orderUIDToOrder map[string]*models.Order
 	mu              sync.RWMutex
 }
 
@@ -17,7 +17,7 @@ func NewInMemory(ctx context.Context, postgresDB *postgres.Postgres) (*InMemory,
 	const op = "NewInMemory - >"
 
 	inMemory := InMemory{
-		OrderUIDToOrder: make(map[string]*models.Order),
+		orderUIDToOrder: make(map[string]*models.Order),
 		mu:              sync.RWMutex{},
 	}
 
@@ -41,17 +41,17 @@ func (m *InMemory) SetOrders(orders *[]*models.Order) {
 func (m *InMemory) SetOrder(order *models.Order) error {
 
 	m.mu.Lock()
-	m.OrderUIDToOrder[order.OrderUID] = order
+	m.orderUIDToOrder[order.OrderUID] = order
 	m.mu.Unlock()
 
 	return nil // заглушка для удобной реализации интерфейса
 }
 
 func (m *InMemory) GetOrder(orderUID string) (*models.Order, error) {
-	const op = "InMemory.GetOrder ->"
+	const op = "inMemory.GetOrder ->"
 
 	m.mu.RLock()
-	order, ok := m.OrderUIDToOrder[orderUID]
+	order, ok := m.orderUIDToOrder[orderUID]
 	if !ok {
 		return nil, &er.Error{Err: nil, Code: er.ErrorNotFound, Message: "order с таким orderUID не найден", Op: op}
 	}

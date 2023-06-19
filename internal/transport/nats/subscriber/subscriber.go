@@ -2,7 +2,6 @@ package subscriber
 
 import (
 	"encoding/json"
-	"fmt"
 	"github.com/nats-io/stan.go"
 	"github.com/slavikx4/l0/internal/models"
 	"github.com/slavikx4/l0/internal/service"
@@ -29,13 +28,11 @@ func (s *Subscriber) Subscribe(channelName string) error {
 	const op = "*Subscriber.Subscribe -> "
 
 	var err error
-	fmt.Println(11111)
 	s.Subscription, err = s.Connect.Subscribe(channelName, s.handlMessage, stan.DurableName(s.DurableName))
 	if err != nil {
 		return &er.Error{Err: err, Code: er.ErrorSubscribe, Message: "не удалось подписаться на канал", Op: op}
 	}
-	fmt.Println(2222)
-	//TODO отписаться где-то от канала
+
 	return nil
 }
 

@@ -9,29 +9,41 @@ import (
 )
 
 type Storage struct {
-	Postgres *postgres.Postgres
-	InMemory *in_memory.InMemory
+	postgres *postgres.Postgres
+	inMemory *in_memory.InMemory
 }
 
 func NewStorage(postgresDB *postgres.Postgres, inMemory *in_memory.InMemory) *Storage {
 	return &Storage{
-		Postgres: postgresDB,
-		InMemory: inMemory,
+		postgres: postgresDB,
+		inMemory: inMemory,
 	}
 }
 
 func (s *Storage) SetOrder(order *models.Order) error {
 	const op = "*Storage.SetOrder -> "
 
-	if err := s.Postgres.SetOrder(context.TODO(), order); err != nil {
+	if err := s.postgres.SetOrder(context.TODO(), order); err != nil {
 		err = er.AddOp(err, op)
 		return err
 	}
 
-	if err := s.InMemory.SetOrder(order); err != nil {
+	if err := s.inMemory.SetOrder(order); err != nil {
 		err = er.AddOp(err, op)
 		return err
 	}
 
 	return nil
+}
+
+func (s *Storage) GetOrder(orderUID string) (*models.Order, error) {
+	const op = "*Storage.GetOrder -> "
+
+	order, err := s.inMemory.GetOrder(orderUID)
+	if err != nil {
+		err = er.AddOp(err, op)
+		return nil, err
+	}
+
+	return order, nil
 }

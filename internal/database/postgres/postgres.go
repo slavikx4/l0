@@ -30,7 +30,7 @@ func NewPostgres(ctx context.Context, url string) (*Postgres, error) {
 }
 
 func (p *Postgres) SetOrder(ctx context.Context, order *models.Order) error {
-	const op = "Postgres.SetOrder -> "
+	const op = "postgres.SetOrder -> "
 
 	if err := p.setDelivery(ctx, &order.Delivery); err != nil {
 		return er.AddOp(err, op)
@@ -80,7 +80,7 @@ func (p *Postgres) SetOrder(ctx context.Context, order *models.Order) error {
 }
 
 func (p *Postgres) GetOrders(ctx context.Context) (*[]*models.Order, error) {
-	const op = "Postgres.GetOrders -> "
+	const op = "postgres.GetOrders -> "
 
 	orders := make([]*models.Order, 0)
 
@@ -149,7 +149,7 @@ func (p *Postgres) GetOrders(ctx context.Context) (*[]*models.Order, error) {
 }
 
 func (p *Postgres) setDelivery(ctx context.Context, delivery *models.Delivery) error {
-	const op = "Postgres.setDelivery -> "
+	const op = "postgres.setDelivery -> "
 
 	query := `INSERT INTO "delivery"(
                        "phone",
@@ -174,7 +174,7 @@ func (p *Postgres) setDelivery(ctx context.Context, delivery *models.Delivery) e
 }
 
 func (p *Postgres) setPayment(ctx context.Context, payment *models.Payment) error {
-	const op = "Postgres.setPayment -> "
+	const op = "postgres.setPayment -> "
 
 	query := `INSERT INTO "payment"(
                       "transaction",
@@ -205,7 +205,7 @@ func (p *Postgres) setPayment(ctx context.Context, payment *models.Payment) erro
 }
 
 func (p *Postgres) setItems(ctx context.Context, items *models.Items, orderUID string) error {
-	const op = "Postgres.setItems -> "
+	const op = "postgres.setItems -> "
 
 	for _, item := range *items {
 		if err := p.setItem(ctx, &item); err != nil {
@@ -219,7 +219,7 @@ func (p *Postgres) setItems(ctx context.Context, items *models.Items, orderUID s
 }
 
 func (p *Postgres) setItem(ctx context.Context, item *models.Item) error {
-	const op = "Postgres.setItem -> "
+	const op = "postgres.setItem -> "
 
 	query := `INSERT INTO "items"(
                     "chrt_id",
@@ -253,7 +253,7 @@ func (p *Postgres) setItem(ctx context.Context, item *models.Item) error {
 }
 
 func (p *Postgres) setOrderOfItem(ctx context.Context, orderUID string, chrtID int) error {
-	const op = "Postgres.setOrderOfItem -> "
+	const op = "postgres.setOrderOfItem -> "
 
 	query := `INSERT INTO "order_item"(
                          "order_uid",
@@ -265,7 +265,7 @@ func (p *Postgres) setOrderOfItem(ctx context.Context, orderUID string, chrtID i
 }
 
 func (p *Postgres) getDelivery(ctx context.Context, delivery *models.Delivery) error {
-	const op = "Postgres.getDelivery -> "
+	const op = "postgres.getDelivery -> "
 
 	query := `SELECT 
 				"phone",
@@ -297,7 +297,7 @@ func (p *Postgres) getDelivery(ctx context.Context, delivery *models.Delivery) e
 }
 
 func (p *Postgres) getPayment(ctx context.Context, payment *models.Payment) error {
-	const op = "Postgres.getPayment -> "
+	const op = "postgres.getPayment -> "
 
 	query := `SELECT 
 					"transaction",
@@ -335,7 +335,7 @@ func (p *Postgres) getPayment(ctx context.Context, payment *models.Payment) erro
 }
 
 func (p *Postgres) getItems(ctx context.Context, items *models.Items, orderUID string) error {
-	const op = "Postgres.getItems -> "
+	const op = "postgres.getItems -> "
 
 	query := `SELECT
 					"track_number",
@@ -384,7 +384,7 @@ func (p *Postgres) getItems(ctx context.Context, items *models.Items, orderUID s
 }
 
 func (p *Postgres) getItemChrtIDsWithOrderUID(ctx context.Context, orderUID string) ([]string, error) {
-	const op = "Postgres.getItemChrtIDsWitchOrderUID -> "
+	const op = "postgres.getItemChrtIDsWitchOrderUID -> "
 
 	query := `SELECT
 					"chrt_id"

@@ -34,5 +34,13 @@ func (s *WBService) AddOrder(order *models.Order) error {
 }
 
 func (s *WBService) GetOrder(orderUID string) (*models.Order, error) {
-	return nil, nil
+	const op = "*WBService.GetOrder -> "
+
+	order, err := s.Storage.GetOrder(orderUID)
+	if err != nil {
+		err = er.AddOp(err, op)
+		return nil, err
+	}
+
+	return order, nil
 }

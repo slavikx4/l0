@@ -15,7 +15,9 @@ const (
 	ErrorSubscribe          errorCode = "error subscribe"
 	ErrorClose              errorCode = "error close"
 	ErrorRead               errorCode = "error read"
-	ErrorJson               errorCode = " error json"
+	ErrorJson               errorCode = "error json"
+	ErrorListenAndServe     errorCode = "error listen and serve"
+	ErrorHTTP               errorCode = "error with work HTTP"
 )
 
 type Error struct {
@@ -33,9 +35,8 @@ func (e Error) Error() string {
 	return fmt.Sprintf("Code: %v; Message: %v; Err: %v; Path: %v", e.Code, e.Message, e.Err, e.Op)
 }
 
-// TODO переписать, чтобы был методом
-func AddOp(v error, op string) *Error {
-	e := v.(Error)
+func AddOp(err error, op string) error {
+	e := err.(*Error)
 	return &Error{
 		Err:     e.Err,
 		Code:    e.Code,
