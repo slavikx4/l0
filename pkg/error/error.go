@@ -4,6 +4,7 @@ import "fmt"
 
 type errorCode string
 
+// обозначение ошибок общего случая
 const (
 	ErrorNotFound           errorCode = "not found rows"
 	ErrorNoConnect          errorCode = "no connection"
@@ -20,6 +21,7 @@ const (
 	ErrorHTTP               errorCode = "error with work HTTP"
 )
 
+// Error структура собственной ошибки для большей обработки
 type Error struct {
 	// Вложенная ошибка
 	Err error
@@ -27,14 +29,16 @@ type Error struct {
 	Code errorCode
 	// Сообщение об ошибке, которое понятно пользователю.
 	Message string
-	// Выполняемая операция
+	// Выполняемая операция, путь до ошибки
 	Op string
 }
 
+// Error функция возвращающая красиво информацию об ошибке
 func (e Error) Error() string {
 	return fmt.Sprintf("Code: %v; Message: %v; Err: %v; Path: %v", e.Code, e.Message, e.Err, e.Op)
 }
 
+// AddOp функция добавления информации о пути
 func AddOp(err error, op string) error {
 	e := err.(*Error)
 	return &Error{

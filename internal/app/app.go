@@ -26,6 +26,7 @@ const (
 )
 
 func Run() {
+	// op во всех методах служит для создание своей ошибки - трассировки ошибки
 	const op = "app/Run -> "
 
 	logger.Logger.Process.Println("запуск сервера...")
@@ -54,11 +55,13 @@ func Run() {
 
 	logger.Logger.Process.Println("подключение к базе данных Postgres...")
 
+	//из config.yml достаём значения и инициализируем ими url для postgres
 	confDB := viper.Get(dbKey).(map[string]interface{})
 	url := fmt.Sprintf("postgres://%v:%v@%v:%v/%v",
 		confDB["username"], confDB["password"], confDB["host"], confDB["port"], confDB["dbname"],
 	)
 
+	//подключаемся к postgres
 	postgresDB, err := postgres.NewPostgres(ctx, url)
 	if err != nil {
 		err = er.AddOp(err, op)
@@ -74,8 +77,10 @@ func Run() {
 	}
 	logger.Logger.Process.Println("загрузка кеша InMemory: успешно")
 
+	//создаём общее хранилище
 	storage := database.NewStorage(postgresDB, inMemory)
 
+	//создаём сервис Wildberries
 	wbService := service.NewWBService(storage)
 	logger.Logger.Process.Println("инициализирован сервис Wildberries")
 
@@ -86,6 +91,7 @@ func Run() {
 		err = er.AddOp(err, op)
 		logger.Logger.Error.Fatalln(err.Error())
 	}
+	//отписка от канала
 	defer func() {
 		if err := stanSubscriber.Subscription.Unsubscribe(); err != nil {
 			err = &er.Error{Err: err, Code: er.ErrorClose, Message: "не удалось отписаться от канала nats-streaming", Op: op}
@@ -94,9 +100,12 @@ func Run() {
 	}()
 	logger.Logger.Process.Println("попытка подписаться на канал к nats-streaming: успешно")
 
+	//создаём самостоятельно описаный хендлер
 	handler := rest.NewHandler(wbService)
+	//запускаем роутер
 	http.HandleFunc("/", handler.GetOrder)
 
+	//запускаем веб сервер
 	logger.Logger.Process.Println("Сервер собран. Сервер приступил к обслуживанию")
 	if err := http.ListenAndServe(fmt.Sprintf(":%v", viper.GetString(portKey)), nil); err != nil {
 		err = &er.Error{Err: err, Code: er.ErrorListenAndServe, Message: "не удалось обслуживать сервер http", Op: op}
@@ -104,6 +113,7 @@ func Run() {
 	}
 }
 
+// функция для чтения из config.yml
 func initConfig() error {
 	viper.AddConfigPath("configs")
 	viper.SetConfigName("config")

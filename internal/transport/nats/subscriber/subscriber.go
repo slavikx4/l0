@@ -9,6 +9,7 @@ import (
 	"github.com/slavikx4/l0/pkg/logger"
 )
 
+// Subscriber структура подписчика на канал nats-streaming
 type Subscriber struct {
 	Connect      stan.Conn
 	DurableName  string
@@ -24,6 +25,7 @@ func NewSubscriber(connect *stan.Conn, service service.Service, durableName stri
 	}
 }
 
+// Subscribe функция подписки на канал nats-streaming
 func (s *Subscriber) Subscribe(channelName string) error {
 	const op = "*Subscriber.Subscribe -> "
 
@@ -36,6 +38,7 @@ func (s *Subscriber) Subscribe(channelName string) error {
 	return nil
 }
 
+// handlMessage функция обработки сообщения пришедшего из канала nats-streaming
 func (s *Subscriber) handlMessage(msg *stan.Msg) {
 	const op = "*Subscriber.handleMessage -> "
 

@@ -9,6 +9,7 @@ import (
 	"github.com/slavikx4/l0/pkg/logger"
 )
 
+// Postgres структура, чтобы добавить методы при работе с БД postgres
 type Postgres struct {
 	*pgxpool.Pool
 }
@@ -16,10 +17,13 @@ type Postgres struct {
 func NewPostgres(ctx context.Context, url string) (*Postgres, error) {
 	const op = "NewPostgres -> "
 
+	//соединение с БД postgres
 	DB, err := pgxpool.New(ctx, url)
 	if err != nil {
 		return nil, &er.Error{Err: err, Code: er.ErrorNoConnect, Message: "не удалось подключиться к DataBase L0", Op: op}
 	}
+
+	//проверка на работоспособность БД
 	if err := DB.Ping(context.Background()); err != nil {
 		return nil, &er.Error{Err: err, Code: er.ErrorNoPing, Message: "не удалось пингануть к DataBase L0", Op: op}
 	}
@@ -29,8 +33,9 @@ func NewPostgres(ctx context.Context, url string) (*Postgres, error) {
 	return &postgres, nil
 }
 
+// SetOrder функция установки единстенного order
 func (p *Postgres) SetOrder(ctx context.Context, order *models.Order) error {
-	const op = "postgres.SetOrder -> "
+	const op = "*Postgres.SetOrder -> "
 
 	if err := p.setDelivery(ctx, &order.Delivery); err != nil {
 		return er.AddOp(err, op)
@@ -79,8 +84,9 @@ func (p *Postgres) SetOrder(ctx context.Context, order *models.Order) error {
 	return nil
 }
 
+// GetOrders функция  выгрузки всех orders
 func (p *Postgres) GetOrders(ctx context.Context) (*[]*models.Order, error) {
-	const op = "postgres.GetOrders -> "
+	const op = "*Postgres.GetOrders -> "
 
 	orders := make([]*models.Order, 0)
 
@@ -148,8 +154,9 @@ func (p *Postgres) GetOrders(ctx context.Context) (*[]*models.Order, error) {
 	return &orders, nil
 }
 
+// setDelivery функция установки delivery
 func (p *Postgres) setDelivery(ctx context.Context, delivery *models.Delivery) error {
-	const op = "postgres.setDelivery -> "
+	const op = "*Postgres.setDelivery -> "
 
 	query := `INSERT INTO "delivery"(
                        "phone",
@@ -173,8 +180,9 @@ func (p *Postgres) setDelivery(ctx context.Context, delivery *models.Delivery) e
 	return nil
 }
 
+// setPayment функция установки payment
 func (p *Postgres) setPayment(ctx context.Context, payment *models.Payment) error {
-	const op = "postgres.setPayment -> "
+	const op = "*Postgres.setPayment -> "
 
 	query := `INSERT INTO "payment"(
                       "transaction",
@@ -204,8 +212,9 @@ func (p *Postgres) setPayment(ctx context.Context, payment *models.Payment) erro
 	return nil
 }
 
+// setItems функция установки всех предметов в одном order
 func (p *Postgres) setItems(ctx context.Context, items *models.Items, orderUID string) error {
-	const op = "postgres.setItems -> "
+	const op = "*Postgres.setItems -> "
 
 	for _, item := range *items {
 		if err := p.setItem(ctx, &item); err != nil {
@@ -218,8 +227,9 @@ func (p *Postgres) setItems(ctx context.Context, items *models.Items, orderUID s
 	return nil
 }
 
+// setItem функция установки одного item
 func (p *Postgres) setItem(ctx context.Context, item *models.Item) error {
-	const op = "postgres.setItem -> "
+	const op = "*Postgres.setItem -> "
 
 	query := `INSERT INTO "items"(
                     "chrt_id",
@@ -252,8 +262,9 @@ func (p *Postgres) setItem(ctx context.Context, item *models.Item) error {
 	return nil
 }
 
+// setOrderOfItem функция установки, какой предмет относится к какому orderUID
 func (p *Postgres) setOrderOfItem(ctx context.Context, orderUID string, chrtID int) error {
-	const op = "postgres.setOrderOfItem -> "
+	const op = "*Postgres.setOrderOfItem -> "
 
 	query := `INSERT INTO "order_item"(
                          "order_uid",
@@ -264,8 +275,9 @@ func (p *Postgres) setOrderOfItem(ctx context.Context, orderUID string, chrtID i
 	return nil
 }
 
+// getDelivery функция выгружающая информацию о Delivery
 func (p *Postgres) getDelivery(ctx context.Context, delivery *models.Delivery) error {
-	const op = "postgres.getDelivery -> "
+	const op = "*Postgres.getDelivery -> "
 
 	query := `SELECT 
 				"phone",
@@ -296,8 +308,9 @@ func (p *Postgres) getDelivery(ctx context.Context, delivery *models.Delivery) e
 	return nil
 }
 
+// getPayment функция выгружающая информацию Payment
 func (p *Postgres) getPayment(ctx context.Context, payment *models.Payment) error {
-	const op = "postgres.getPayment -> "
+	const op = "*Postgres.getPayment -> "
 
 	query := `SELECT 
 					"transaction",
@@ -334,8 +347,9 @@ func (p *Postgres) getPayment(ctx context.Context, payment *models.Payment) erro
 	return nil
 }
 
+// getItems функция выгружающая информацию всех item
 func (p *Postgres) getItems(ctx context.Context, items *models.Items, orderUID string) error {
-	const op = "postgres.getItems -> "
+	const op = "*Postgres.getItems -> "
 
 	query := `SELECT
 					"track_number",
@@ -383,8 +397,9 @@ func (p *Postgres) getItems(ctx context.Context, items *models.Items, orderUID s
 	return nil
 }
 
+// getItemChrtIDsWithOrderUID функция выгружающая список всех item в заказе по orderUID
 func (p *Postgres) getItemChrtIDsWithOrderUID(ctx context.Context, orderUID string) ([]string, error) {
-	const op = "postgres.getItemChrtIDsWitchOrderUID -> "
+	const op = "*Postgres.getItemChrtIDsWitchOrderUID -> "
 
 	query := `SELECT
 					"chrt_id"
