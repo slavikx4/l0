@@ -1,5 +1,10 @@
+.PHONY: build
+build:
+	go build ./cmd/publisher
+	go build ./cmd/l0
+
 .PHONY: run
-run:
-	go run  ./cmd/l0
-	go run  ./cmd/publisher
+run: build
+	start ./lo.exe
+	start ./publisher.exe
 
