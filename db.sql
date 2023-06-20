@@ -15,6 +15,7 @@ CREATE TABLE "order" (
 	"oof_shard" character varying NOT NULL,
 	CONSTRAINT "order_pk" PRIMARY KEY ("id")
 ) WITH (
+
   OIDS=FALSE
 );
 
